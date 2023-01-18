@@ -6,11 +6,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include_directories(elfio-3.11/elfio)
-include_directories(elfio-3.11)
+if (WIN32)
+     include_directories(elfio-3.11/elfio_windows/elfio)
+     include_directories(elfio-3.11/elfio_windows)
+endif(WIN32)
+
+if (UNIX)
+     include_directories(elfio-3.11/elfio_linux/elfio)
+     include_directories(elfio-3.11/elfio_linux)
+endif(UNIX)
 
 file(GLOB CPP_SOURCES
      "main.cpp"
+     "Sim/Sim.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
