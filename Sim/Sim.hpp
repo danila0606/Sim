@@ -2,8 +2,10 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "helper.hpp" 
+#include "opdefs.hpp"
 
 class Sim final {
 
@@ -13,7 +15,12 @@ public:
 
 public:
 
-    void run();
+    size_t run();
+
+public:
+
+    void execute(Instruction instr);
+    void dump_registers();
 
 private:
     std::vector<uint32_t> registers;

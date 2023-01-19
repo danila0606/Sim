@@ -53,6 +53,6 @@ struct Instruction {
     uint8_t rs1= {}, rs2 = {}, rs3 = {};
     uint8_t rd = {};
 
-    uint32_t imm = {};
+    int32_t imm = {};
     Opcode id = Opcode::NONE;
 };
