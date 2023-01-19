@@ -1,7 +1,6 @@
 #include "Sim.hpp"
 
 #include <elfio.hpp>
-#include <iostream>
 
 //#define ELF_FILE_INFO_DUMP
 
@@ -710,28 +709,52 @@ void Sim::execute(Instruction instr) {
         break;
     }
 
+    registers[0] = 0;
 }
 
 
-size_t Sim::run() {
+size_t Sim::run(std::ostream& trace_out) {
 
     size_t instr_count = 0;
+    Instruction instr = {};
 
     while (!program_halted) {
 
-        uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
+        if (!simple_cache.count(pc)) {
+            uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
 
-        Instruction instr = decode(word);
+            instr = decode(word);
 
+            simple_cache[pc] = instr;
+        }
+        else {
+            instr = simple_cache[pc];
+        }
+        
         execute(instr);
 
+#ifdef TRACE
+    trace_out << "---------------------------------------------------------------" << std::endl;
+    trace_out << int(instr.id)
+                  << std::dec << " rd = " << (int)instr.rd
+                  << ", rs1 = " << (int)instr.rs1
+                  << ", rs2 = " << (int)instr.rs2
+                  << ", rs3 = " << (int)instr.rs3 << std::hex << ", imm = 0x"
+                  << instr.imm << std::dec << std::endl;
+
+        trace_out << "PC = 0x" << std::hex << pc << std::endl;
+
+        trace_out << "rd val" << std::hex << registers[instr.rd] << std::endl;
+        trace_out << "Zero reg: " << registers[0] << std::endl;
+        
+#endif
         instr_count++;
     }
 
     return instr_count;
 }
 
-void Sim::dump_registers() {
+void Sim::dump_registers(std::ostream& out) {
     for (int i = 0; i < registers.size(); ++i) 
-        std::cout << std::dec << "r" << i << " : " << registers[i] << std::endl;
+        out << std::dec << "r" << i << " : " << registers[i] << std::endl;
 }
