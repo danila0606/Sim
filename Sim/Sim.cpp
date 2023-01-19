@@ -1,8 +1,11 @@
 #include "Sim.hpp"
 
 #include <elfio.hpp>
+#include <set>
 
 //#define ELF_FILE_INFO_DUMP
+
+#define USE_CACHE
 
 Sim::Sim(const std::string& elf_filename) :
     registers(std::vector<uint32_t>(REG_NUM)) 
@@ -712,6 +715,26 @@ void Sim::execute(Instruction instr) {
     registers[0] = 0;
 }
 
+static bool is_end_of_block(Opcode opcode) {
+
+    static std::set<Opcode> end_of_block_opcodes = {
+        Opcode::BEQ, 
+        Opcode::BGE,
+        Opcode::BGEU,
+        Opcode::BLT,
+        Opcode::BLTU,
+        Opcode::BNE,
+        Opcode::EBREAK,
+        Opcode::ECALL,
+        Opcode::JAL,
+        Opcode::JALR,
+        Opcode::PAUSE,
+        Opcode::SBREAK,
+        Opcode::SCALL
+    };
+
+    return end_of_block_opcodes.count(opcode);
+}
 
 size_t Sim::run(std::ostream& trace_out) {
 
@@ -720,18 +743,40 @@ size_t Sim::run(std::ostream& trace_out) {
 
     while (!program_halted) {
 
+#ifdef USE_CACHE
+        std::vector<Instruction> cached_instrs = {};
+        uint32_t cashed_pc = pc; // start of block
         if (!simple_cache.count(pc)) {
-            uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
 
-            instr = decode(word);
+            do {
+                uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
+                instr = decode(word);
+                pc += 4;
+                cached_instrs.push_back(instr);
 
-            simple_cache[pc] = instr;
+            } while(!is_end_of_block(instr.id));
+
+            simple_cache[cashed_pc] = cached_instrs;
+            pc = cashed_pc;     
         }
         else {
-            instr = simple_cache[pc];
+            cached_instrs = simple_cache[pc];
         }
         
+        for (auto&& instr : cached_instrs)
+        {   
+            execute(instr);
+        }
+
+        instr_count += cached_instrs.size();
+#else
+        uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
+        Instruction instr = decode(word);
+
         execute(instr);
+
+        instr_count++;
+#endif
 
 #ifdef TRACE
     trace_out << "---------------------------------------------------------------" << std::endl;
@@ -748,7 +793,6 @@ size_t Sim::run(std::ostream& trace_out) {
         trace_out << "Zero reg: " << registers[0] << std::endl;
         
 #endif
-        instr_count++;
     }
 
     return instr_count;

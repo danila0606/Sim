@@ -9,7 +9,7 @@
 #include "helper.hpp" 
 #include "opdefs.hpp"
 
-#define TRACE
+//#define TRACE
 
 class Sim final {
 
@@ -37,6 +37,6 @@ private:
 
 private:
 
-    std::unordered_map<uint32_t, Instruction> simple_cache = {};
+    std::unordered_map<uint32_t, std::vector<Instruction>> simple_cache = {};
     
 };

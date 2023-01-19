@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 #else
-    std::ostream trace_out_file(std::cout);
+    std::ostream& trace_out_file = std::cout;
 #endif
 
     Sim sim(elf_filename);
@@ -44,7 +44,9 @@ int main(int argc, char **argv) {
 
         sim.dump_registers(trace_out_file);
 
+#ifdef TRACE
         trace_out_file.close();
+#endif
 
         std::cout << "Instruction num: "<< instr_count << std::endl;
 
