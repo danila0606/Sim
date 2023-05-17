@@ -19,6 +19,10 @@ endif(UNIX)
 file(GLOB CPP_SOURCES
      "main.cpp"
      "Sim/Sim.cpp"
+     "Sim/Gfuncs.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
+
+find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-system sfml-network sfml-graphics sfml-window)

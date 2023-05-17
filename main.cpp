@@ -3,7 +3,8 @@
 
 #include "Sim/Sim.hpp"
 
-#define MY_DEBUG
+//#define MY_DEBUG
+//#define TRACE
 
 // cmake -DCMAKE_BUILD_TYPE=Release ..
 // ../riscv32-embecosm-ubuntu2204-gcc12.2.0/bin/riscv32-unknown-elf-gcc -march=rv32i br.c -O0 -e main

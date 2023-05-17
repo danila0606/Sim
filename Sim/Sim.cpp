@@ -1,11 +1,12 @@
 #include "Sim.hpp"
+#include "Gfuncs.hpp"
 
 #include <elfio.hpp>
 #include <set>
 
 //#define ELF_FILE_INFO_DUMP
-
-#define USE_CACHE
+//#define TRACE
+//#define USE_CACHE
 
 Sim::Sim(const std::string& elf_filename) :
     registers(std::vector<uint32_t>(REG_NUM)) 
@@ -88,451 +89,470 @@ Sim::Sim(const std::string& elf_filename) :
 
 }
 
-// static Instruction decode(uint32_t word) {
-
-//     Instruction instr{};
-
-//     uint32_t opcode = (word >> OPCODE_SHIFT) & OPCODE_MASK;
-
-//     switch (opcode) {
-//         case LOAD_MASK : {
-//             uint32_t width = (word >> FUNCT3_SHIFT) & FUNCT3_MASK;
-
-//             switch (width) {
-//                 case 0b0:
-//                 {
-                    
-//                 }
-//                 case 0b1:
-//                 {
-                    
-//                 }
-//                 case 0b10:
-//                 {
-                    
-//                 }
-//                 case 0b100:
-//                 {
-                    
-//                 }
-//                 case 0b101:
-//                 {
-                    
-//                 }
-//             } 
-//         }
-//     }
-
-
-// }
-
 static Instruction decode(uint32_t word) {
     Instruction instr{};
-    switch ((word >> 0) & 0b1111111) {
+    switch ((word >> 0) & 0b111000001111111) {
         case 0b11: {
-            switch ((word >> 12) & 0b111) {
-                case 0b0: {
-                    //! LB
-                    //! xxxxxxxxxxxxxxxxx000xxxxx0000011
-                    instr.id = Opcode::LB;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b1: {
-                    //! LH
-                    //! xxxxxxxxxxxxxxxxx001xxxxx0000011
-                    instr.id = Opcode::LH;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b10: {
-                    //! LW
-                    //! xxxxxxxxxxxxxxxxx010xxxxx0000011
-                    instr.id = Opcode::LW;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b100: {
-                    //! LBU
-                    //! xxxxxxxxxxxxxxxxx100xxxxx0000011
-                    instr.id = Opcode::LBU;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b101: {
-                    //! LHU
-                    //! xxxxxxxxxxxxxxxxx101xxxxx0000011
-                    instr.id = Opcode::LHU;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-            }
+            //! LB
+            //! xxxxxxxxxxxxxxxxx000xxxxx0000011
+            instr.id = Opcode::LB;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000000011: {
+            //! LH
+            //! xxxxxxxxxxxxxxxxx001xxxxx0000011
+            instr.id = Opcode::LH;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b10000000000011: {
+            //! LW
+            //! xxxxxxxxxxxxxxxxx010xxxxx0000011
+            instr.id = Opcode::LW;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b100000000000011: {
+            //! LBU
+            //! xxxxxxxxxxxxxxxxx100xxxxx0000011
+            instr.id = Opcode::LBU;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b101000000000011: {
+            //! LHU
+            //! xxxxxxxxxxxxxxxxx101xxxxx0000011
+            instr.id = Opcode::LHU;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
         }
         case 0b1111: {
-            switch ((word >> 12) & 0b111) {
-                case 0b0: {
-                    //! FENCE
-                    //! xxxxxxxxxxxxxxxxx000xxxxx0001111
-                    instr.id = Opcode::FENCE;
-                    instr.imm |= static_cast<int32_t>(slice<31, 28>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<27, 24>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<23, 20>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    return instr;
-                }
-            }
+            //! FENCE
+            //! xxxxxxxxxxxxxxxxx000xxxxx0001111
+            instr.id = Opcode::FENCE;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 28>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<27, 24>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<23, 20>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            return instr;
         }
         case 0b10011: {
-            switch ((word >> 12) & 0b111) {
-                case 0b0: {
-                    //! ADDI
-                    //! xxxxxxxxxxxxxxxxx000xxxxx0010011
-                    instr.id = Opcode::ADDI;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b10: {
-                    //! SLTI
-                    //! xxxxxxxxxxxxxxxxx010xxxxx0010011
-                    instr.id = Opcode::SLTI;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b11: {
-                    //! SLTIU
-                    //! xxxxxxxxxxxxxxxxx011xxxxx0010011
-                    instr.id = Opcode::SLTIU;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b100: {
-                    //! XORI
-                    //! xxxxxxxxxxxxxxxxx100xxxxx0010011
-                    instr.id = Opcode::XORI;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b110: {
-                    //! ORI
-                    //! xxxxxxxxxxxxxxxxx110xxxxx0010011
-                    instr.id = Opcode::ORI;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b111: {
-                    //! ANDI
-                    //! xxxxxxxxxxxxxxxxx111xxxxx0010011
-                    instr.id = Opcode::ANDI;
-                    instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
-                    return instr;
-                }
-            }
+            //! ADDI
+            //! xxxxxxxxxxxxxxxxx000xxxxx0010011
+            instr.id = Opcode::ADDI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
         }
+        case 0b10000000010011: {
+            //! SLTI
+            //! xxxxxxxxxxxxxxxxx010xxxxx0010011
+            instr.id = Opcode::SLTI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b11000000010011: {
+            //! SLTIU
+            //! xxxxxxxxxxxxxxxxx011xxxxx0010011
+            instr.id = Opcode::SLTIU;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b100000000010011: {
+            //! XORI
+            //! xxxxxxxxxxxxxxxxx100xxxxx0010011
+            instr.id = Opcode::XORI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b110000000010011: {
+            //! ORI
+            //! xxxxxxxxxxxxxxxxx110xxxxx0010011
+            instr.id = Opcode::ORI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b111000000010011: {
+            //! ANDI
+            //! xxxxxxxxxxxxxxxxx111xxxxx0010011
+            instr.id = Opcode::ANDI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b100011: {
+            //! SB
+            //! xxxxxxxxxxxxxxxxx000xxxxx0100011
+            instr.id = Opcode::SB;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000100011: {
+            //! SH
+            //! xxxxxxxxxxxxxxxxx001xxxxx0100011
+            instr.id = Opcode::SH;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b10000000100011: {
+            //! SW
+            //! xxxxxxxxxxxxxxxxx010xxxxx0100011
+            instr.id = Opcode::SW;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1100011: {
+            //! BEQ
+            //! xxxxxxxxxxxxxxxxx000xxxxx1100011
+            instr.id = Opcode::BEQ;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+        case 0b1000001100011: {
+            //! BNE
+            //! xxxxxxxxxxxxxxxxx001xxxxx1100011
+            instr.id = Opcode::BNE;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+        case 0b100000001100011: {
+            //! BLT
+            //! xxxxxxxxxxxxxxxxx100xxxxx1100011
+            instr.id = Opcode::BLT;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+        case 0b101000001100011: {
+            //! BGE
+            //! xxxxxxxxxxxxxxxxx101xxxxx1100011
+            instr.id = Opcode::BGE;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+        case 0b110000001100011: {
+            //! BLTU
+            //! xxxxxxxxxxxxxxxxx110xxxxx1100011
+            instr.id = Opcode::BLTU;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+        case 0b111000001100011: {
+            //! BGEU
+            //! xxxxxxxxxxxxxxxxx111xxxxx1100011
+            instr.id = Opcode::BGEU;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
+            return instr;
+        }
+    }
+    switch ((word >> 0) & 0b11111110000000000111000001111111) {
+        case 0b1000000010011: {
+            //! SLLI
+            //! 0000000xxxxxxxxxx001xxxxx0010011
+            instr.id = Opcode::SLLI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b101000000010011: {
+            //! SRLI
+            //! 0000000xxxxxxxxxx101xxxxx0010011
+            instr.id = Opcode::SRLI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000000000000101000000010011: {
+            //! SRAI
+            //! 0100000xxxxxxxxxx101xxxxx0010011
+            instr.id = Opcode::SRAI;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b110011: {
+            //! ADD
+            //! 0000000xxxxxxxxxx000xxxxx0110011
+            instr.id = Opcode::ADD;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000110011: {
+            //! SLL
+            //! 0000000xxxxxxxxxx001xxxxx0110011
+            instr.id = Opcode::SLL;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b10000000110011: {
+            //! SLT
+            //! 0000000xxxxxxxxxx010xxxxx0110011
+            instr.id = Opcode::SLT;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b11000000110011: {
+            //! SLTU
+            //! 0000000xxxxxxxxxx011xxxxx0110011
+            instr.id = Opcode::SLTU;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b100000000110011: {
+            //! XOR
+            //! 0000000xxxxxxxxxx100xxxxx0110011
+            instr.id = Opcode::XOR;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b101000000110011: {
+            //! SRL
+            //! 0000000xxxxxxxxxx101xxxxx0110011
+            instr.id = Opcode::SRL;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b110000000110011: {
+            //! OR
+            //! 0000000xxxxxxxxxx110xxxxx0110011
+            instr.id = Opcode::OR;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b111000000110011: {
+            //! AND
+            //! 0000000xxxxxxxxxx111xxxxx0110011
+            instr.id = Opcode::AND;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b10000000000110000000110011: {
+            //! REM
+            //! 0000001xxxxxxxxxx110xxxxx0110011
+            instr.id = Opcode::REM;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b10000000000111000000110011: {
+            //! REMU
+            //! 0000001xxxxxxxxxx111xxxxx0110011
+            instr.id = Opcode::REMU;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000000000000000000000110011: {
+            //! SUB
+            //! 0100000xxxxxxxxxx000xxxxx0110011
+            instr.id = Opcode::SUB;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+        case 0b1000000000000000101000000110011: {
+            //! SRA
+            //! 0100000xxxxxxxxxx101xxxxx0110011
+            instr.id = Opcode::SRA;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.rs2 = std::bit_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
+            return instr;
+        }
+    }
+    switch ((word >> 0) & 0b1111111) {
         case 0b10111: {
             //! AUIPC
             //! xxxxxxxxxxxxxxxxxxxxxxxxx0010111
             instr.id = Opcode::AUIPC;
-            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<31, 12>(word) << 12) >> 0;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 12>(word) << 12) >> 0;
             return instr;
-        }
-        case 0b100011: {
-            switch ((word >> 12) & 0b111) {
-                case 0b0: {
-                    //! SB
-                    //! xxxxxxxxxxxxxxxxx000xxxxx0100011
-                    instr.id = Opcode::SB;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b1: {
-                    //! SH
-                    //! xxxxxxxxxxxxxxxxx001xxxxx0100011
-                    instr.id = Opcode::SH;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    return instr;
-                }
-                case 0b10: {
-                    //! SW
-                    //! xxxxxxxxxxxxxxxxx010xxxxx0100011
-                    instr.id = Opcode::SW;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                    return instr;
-                }
-            }
-        }
-        case 0b110011: {
-            switch ((word >> 25) & 0b1111111) {
-                case 0b0: {
-                    switch ((word >> 12) & 0b111) {
-                        case 0b0: {
-                            //! ADD
-                            //! 0000000xxxxxxxxxx000xxxxx0110011
-                            instr.id = Opcode::ADD;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b1: {
-                            //! SLL
-                            //! 0000000xxxxxxxxxx001xxxxx0110011
-                            instr.id = Opcode::SLL;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b10: {
-                            //! SLT
-                            //! 0000000xxxxxxxxxx010xxxxx0110011
-                            instr.id = Opcode::SLT;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b11: {
-                            //! SLTU
-                            //! 0000000xxxxxxxxxx011xxxxx0110011
-                            instr.id = Opcode::SLTU;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b100: {
-                            //! XOR
-                            //! 0000000xxxxxxxxxx100xxxxx0110011
-                            instr.id = Opcode::XOR;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b101: {
-                            //! SRL
-                            //! 0000000xxxxxxxxxx101xxxxx0110011
-                            instr.id = Opcode::SRL;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b110: {
-                            //! OR
-                            //! 0000000xxxxxxxxxx110xxxxx0110011
-                            instr.id = Opcode::OR;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b111: {
-                            //! AND
-                            //! 0000000xxxxxxxxxx111xxxxx0110011
-                            instr.id = Opcode::AND;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                    }
-                }
-                case 0b100000: {
-                    switch ((word >> 12) & 0b111) {
-                        case 0b0: {
-                            //! SUB
-                            //! 0100000xxxxxxxxxx000xxxxx0110011
-                            instr.id = Opcode::SUB;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                        case 0b101: {
-                            //! SRA
-                            //! 0100000xxxxxxxxxx101xxxxx0110011
-                            instr.id = Opcode::SRA;
-                            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-                            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                            instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                            return instr;
-                        }
-                    }
-                }
-            }
         }
         case 0b110111: {
             //! LUI
             //! xxxxxxxxxxxxxxxxxxxxxxxxx0110111
             instr.id = Opcode::LUI;
-            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<31, 12>(word) << 12) >> 0;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 12>(word) << 12) >> 0;
             return instr;
-        }
-        case 0b1100011: {
-            switch ((word >> 12) & 0b111) {
-                case 0b0: {
-                    //! BEQ
-                    //! xxxxxxxxxxxxxxxxx000xxxxx1100011
-                    instr.id = Opcode::BEQ;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-                case 0b1: {
-                    //! BNE
-                    //! xxxxxxxxxxxxxxxxx001xxxxx1100011
-                    instr.id = Opcode::BNE;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-                case 0b100: {
-                    //! BLT
-                    //! xxxxxxxxxxxxxxxxx100xxxxx1100011
-                    instr.id = Opcode::BLT;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-                case 0b101: {
-                    //! BGE
-                    //! xxxxxxxxxxxxxxxxx101xxxxx1100011
-                    instr.id = Opcode::BGE;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-                case 0b110: {
-                    //! BLTU
-                    //! xxxxxxxxxxxxxxxxx110xxxxx1100011
-                    instr.id = Opcode::BLTU;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-                case 0b111: {
-                    //! BGEU
-                    //! xxxxxxxxxxxxxxxxx111xxxxx1100011
-                    instr.id = Opcode::BGEU;
-                    instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 19;
-                    instr.imm |= static_cast<int32_t>(slice<30, 25>(word) << 5) >> 0;
-                    instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-                    instr.rs2 = static_cast<int32_t>(slice<24, 20>(word) << 0) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<11, 8>(word) << 1) >> 0;
-                    instr.imm |= static_cast<int32_t>(slice<7, 7>(word) << 11) >> 0;
-                    return instr;
-                }
-            }
         }
         case 0b1100111: {
             //! JALR
             //! xxxxxxxxxxxxxxxxx000xxxxx1100111
             instr.id = Opcode::JALR;
-            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-            instr.rs1 = static_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
-            instr.imm |= static_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.rs1 = std::bit_cast<int32_t>(slice<19, 15>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 20;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 20>(word) << 0) >> 0;
             return instr;
         }
         case 0b1101111: {
             //! JAL
             //! xxxxxxxxxxxxxxxxxxxxxxxxx1101111
             instr.id = Opcode::JAL;
-            instr.rd = static_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<31, 31>(word) << 31) >> 11;
-            instr.imm |= static_cast<int32_t>(slice<30, 21>(word) << 1) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<20, 20>(word) << 11) >> 0;
-            instr.imm |= static_cast<int32_t>(slice<19, 12>(word) << 12) >> 0;
+            instr.rd = std::bit_cast<int32_t>(slice<11, 7>(word) << 0) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<31, 31>(word) << 31) >> 11;
+            instr.imm |= std::bit_cast<int32_t>(slice<30, 21>(word) << 1) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<20, 20>(word) << 11) >> 0;
+            instr.imm |= std::bit_cast<int32_t>(slice<19, 12>(word) << 12) >> 0;
             return instr;
         }
+    }
+    switch ((word >> 0) & 0b11111111111111111111111111111111) {
         case 0b1110011: {
-            switch ((word >> 7) & 0b1111111111111111111111111) {
-                case 0b0: {
-                    //! ECALL
-                    //! 00000000000000000000000001110011
-                    instr.id = Opcode::ECALL;
-                    return instr;
-                }
-                case 0b10000000000000: {
-                    //! EBREAK
-                    //! 00000000000100000000000001110011
-                    instr.id = Opcode::EBREAK;
-                    return instr;
-                }
-            }
+            //! ECALL
+            //! 00000000000000000000000001110011
+            instr.id = Opcode::ECALL;
+            return instr;
+        }
+        case 0b100000000000001110011: {
+            //! EBREAK
+            //! 00000000000100000000000001110011
+            instr.id = Opcode::EBREAK;
+            return instr;
+        }
+    }
+    switch ((word >> 0) & 0b11111111111111111111000001111111) {
+        case 0b1000000000000000001110011: {
+            //! GRAPH_INIT
+            //! 00000001000000000000000001110011
+            instr.id = Opcode::GRAPH_INIT;
+            return instr;
+        }
+        case 0b10000000000000000001110011: {
+            //! GRAPH_PUT_PIXEL
+            //! 00000010000000000000000001110011
+            instr.id = Opcode::GRAPH_PUT_PIXEL;
+            return instr;
+        }
+        case 0b11000000000000000001110011: {
+            //! GRAPH_WINDOW_IS_OPEN
+            //! 00000011000000000000000001110011
+            instr.id = Opcode::GRAPH_WINDOW_IS_OPEN;
+            return instr;
+        }
+        case 0b100000000000000000001110011: {
+            //! GRAPH_TIME
+            //! 00000100000000000000000001110011
+            instr.id = Opcode::GRAPH_TIME;
+            return instr;
+        }
+        case 0b101000000000000000001110011: {
+            //! GRAPH_FLUSH
+            //! 00000101000000000000000001110011
+            instr.id = Opcode::GRAPH_FLUSH;
+            return instr;
+        }
+        case 0b110000000000000000001110011: {
+            //! GRAPH_RAND
+            //! 00000110000000000000000001110011
+            instr.id = Opcode::GRAPH_MUL;
+            return instr;
+        }
+        case 0b111000000000000000001110011: {
+            //! GRAPH_CLEAR
+            //! 00000111000000000000000001110011
+            instr.id = Opcode::GRAPH_DIV;
+            return instr;
         }
     }
 
-}  //!
+}   
+
 
 void Sim::execute(Instruction instr) {
 
@@ -625,9 +645,12 @@ void Sim::execute(Instruction instr) {
         pc += imm;
         break;
     case Opcode::JALR :
-        registers[rd] = (static_cast<int32_t>(registers[r1]) + imm) & (~0b01);
-        pc = imm;
-        break;
+        {
+            auto pc_next = pc + 4;
+            pc = (static_cast<int32_t>(registers[r1]) + imm) & (~0b01);
+            registers[rd] = pc_next;
+            break;
+        }
     case Opcode::LB :
         tmp_32 = *reinterpret_cast<const uint8_t*>(memspace.data() + (registers[r1] + imm));
         registers[rd] = static_cast<uint32_t>(tmp_32 << 24) >> 24;
@@ -707,6 +730,35 @@ void Sim::execute(Instruction instr) {
         *reinterpret_cast<uint32_t*>(memspace.data() + (registers[r1] + imm)) = tmp_32;
         pc += 4;
         break;
+    case Opcode::GRAPH_MUL :
+        registers[15] = gmul((int)registers[10], (int)registers[11]);
+        pc += 4;
+        break;
+    case Opcode::GRAPH_DIV :
+        registers[15] = gdiv((int)registers[10], (int)registers[11]);
+        pc += 4;
+        break;
+    case Opcode::GRAPH_INIT :
+        init();
+        pc += 4;
+        break;
+    case Opcode::GRAPH_FLUSH :
+        flush();
+        pc += 4;
+        break;
+    case Opcode::GRAPH_PUT_PIXEL :
+        put_pixel(registers[10],registers[11],registers[12],registers[13],registers[14],registers[15]);
+        pc += 4;
+        break;
+    case Opcode::GRAPH_WINDOW_IS_OPEN :
+        registers[15] = is_window_opened();
+        pc += 4;
+        break;
+    case Opcode::GRAPH_TIME :
+        registers[15] = get_time_milliseconds();
+        pc += 4;
+        break;
+    
     default:
         throw std::invalid_argument("Invalid Opcode: " + static_cast<int>(instr.id));
         break;
@@ -744,7 +796,6 @@ size_t Sim::run(std::ostream& trace_out) {
     while (!program_halted) {
 
 #ifdef USE_CACHE
-        std::vector<Instruction> cached_instrs = {};
         uint32_t cashed_pc = pc; // start of block
         if (!simple_cache.count(pc)) {
 
@@ -752,16 +803,15 @@ size_t Sim::run(std::ostream& trace_out) {
                 uint32_t word = *reinterpret_cast<const uint32_t*>(memspace.data() + pc);
                 instr = decode(word);
                 pc += 4;
-                cached_instrs.push_back(instr);
+                simple_cache[cashed_pc].push_back(instr);
 
             } while(!is_end_of_block(instr.id));
 
-            simple_cache[cashed_pc] = cached_instrs;
             pc = cashed_pc;     
         }
-        else {
-            cached_instrs = simple_cache[pc];
-        }
+
+        std::vector<Instruction>& cached_instrs = simple_cache[pc];
+        
         
         for (auto&& instr : cached_instrs)
         {   
@@ -780,8 +830,8 @@ size_t Sim::run(std::ostream& trace_out) {
 
 #ifdef TRACE
     trace_out << "---------------------------------------------------------------" << std::endl;
-    trace_out << int(instr.id)
-                  << std::dec << " rd = " << (int)instr.rd
+    trace_out << std::dec
+                  << int(instr.id) << " rd = " << (int)instr.rd
                   << ", rs1 = " << (int)instr.rs1
                   << ", rs2 = " << (int)instr.rs2
                   << ", rs3 = " << (int)instr.rs3 << std::hex << ", imm = 0x"
